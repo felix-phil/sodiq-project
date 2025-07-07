@@ -27,7 +27,7 @@ const Instructors = () => {
 
       <div className="flex flex-col mt-5">
         <div className="flex flex-row items-center justify-between">
-          <h1 className="text-lg font-bold text-primary">All Venues</h1>
+          <h1 className="text-lg font-bold text-primary">All Students</h1>
         </div>
         <table className="w-full mt-5 stripped table-fixed">
           <thead>

@@ -49,6 +49,7 @@ const CreateCourseModal: FC<IProps> = ({
           lecturerId: values.lecturerId,
           level: Number(values.level),
         });
+        formik.resetForm();
         toast.success("Course created successfully");
         refresh?.();
         onDismiss?.();

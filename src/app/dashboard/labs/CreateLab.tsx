@@ -39,6 +39,7 @@ const CreateLabModal: FC<IProps> = ({ open = false, onDismiss, refresh }) => {
           name: values.name,
           type: values.type,
         });
+        formik.resetForm();
         toast.success("Venue created successfully");
         refresh?.();
         onDismiss?.();
