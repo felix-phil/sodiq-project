@@ -13,6 +13,7 @@ import {
   getFirestore,
 } from "firebase/firestore";
 import app from "../../firebase";
+import { format } from "date-fns";
 import { Schedule, ScheduleFullDetails } from "@/types";
 
 const db = getFirestore(app);
@@ -93,7 +94,7 @@ export class ScheduleModel {
       ...doc.data(),
     })) as Schedule[];
 
-    const detailedSchedules = await Promise.all(
+    const detailedSchedules = (await Promise.all(
       schedules.map(async (sched) => {
         const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
           getDoc(doc(coursesRef, sched.courseId)),
@@ -114,7 +115,7 @@ export class ScheduleModel {
             : null,
         };
       })
-    ) as ScheduleFullDetails[];
+    )) as ScheduleFullDetails[];
 
     return detailedSchedules;
   }
@@ -126,7 +127,7 @@ export class ScheduleModel {
       ...doc.data(),
     })) as Schedule[];
 
-    const detailedSchedules = await Promise.all(
+    const detailedSchedules = (await Promise.all(
       schedules.map(async (sched) => {
         const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
           getDoc(doc(coursesRef, sched.courseId)),
@@ -147,7 +148,7 @@ export class ScheduleModel {
             : null,
         };
       })
-    ) as ScheduleFullDetails[];
+    )) as ScheduleFullDetails[];
 
     return detailedSchedules;
   }
@@ -167,7 +168,7 @@ export class ScheduleModel {
       ...doc.data(),
     })) as Schedule[];
 
-    const detailedSchedules = await Promise.all(
+    const detailedSchedules = (await Promise.all(
       schedules.map(async (sched) => {
         const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
           getDoc(doc(coursesRef, sched.courseId)),
@@ -188,7 +189,7 @@ export class ScheduleModel {
             : null,
         };
       })
-    ) as ScheduleFullDetails[];
+    )) as ScheduleFullDetails[];
 
     return detailedSchedules;
   }
@@ -256,5 +257,213 @@ export class ScheduleModel {
 
   static async deleteSchedule(scheduleId: string) {
     await deleteDoc(doc(schedulesRef, scheduleId));
+  }
+
+  static getTodayDayOfWeek(): string {
+    return format(new Date(), "EEEE"); // gives Monday, Tuesday, etc.
+  }
+
+  static async getTodaySchedulesForAdmin() {
+    const today = this.getTodayDayOfWeek();
+    const q = query(schedulesRef, where("dayOfWeek", "==", today));
+    const snap = await getDocs(q);
+
+    const schedules = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Schedule[];
+
+    const detailed = await Promise.all(
+      schedules.map(async (sched) => {
+        const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
+          getDoc(doc(coursesRef, sched.courseId)),
+          getDoc(doc(venuesRef, sched.venueId)),
+          getDoc(doc(usersRef, sched.lecturerId)),
+        ]);
+
+        return {
+          ...sched,
+          course: courseSnap.exists()
+            ? { id: courseSnap.id, ...courseSnap.data() }
+            : null,
+          venue: venueSnap.exists()
+            ? { id: venueSnap.id, ...venueSnap.data() }
+            : null,
+          lecturer: lecturerSnap.exists()
+            ? { id: lecturerSnap.id, ...lecturerSnap.data() }
+            : null,
+        };
+      })
+    );
+
+    return detailed as ScheduleFullDetails[];
+  }
+
+  static async getTodaySchedulesForLecturer(lecturerId: string) {
+    const today = this.getTodayDayOfWeek();
+    const q = query(
+      schedulesRef,
+      where("dayOfWeek", "==", today),
+      where("lecturerId", "==", lecturerId)
+    );
+    const snap = await getDocs(q);
+
+    const schedules = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Schedule[];
+
+    const detailed = await Promise.all(
+      schedules.map(async (sched) => {
+        const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
+          getDoc(doc(coursesRef, sched.courseId)),
+          getDoc(doc(venuesRef, sched.venueId)),
+          getDoc(doc(usersRef, sched.lecturerId)),
+        ]);
+
+        return {
+          ...sched,
+          course: courseSnap.exists()
+            ? { id: courseSnap.id, ...courseSnap.data() }
+            : null,
+          venue: venueSnap.exists()
+            ? { id: venueSnap.id, ...venueSnap.data() }
+            : null,
+          lecturer: lecturerSnap.exists()
+            ? { id: lecturerSnap.id, ...lecturerSnap.data() }
+            : null,
+        };
+      })
+    );
+
+    return detailed as ScheduleFullDetails[];
+  }
+
+  static async getTodaySchedulesForStudent(studentId: string) {
+    const today = this.getTodayDayOfWeek();
+
+    const userSnap = await getDoc(doc(usersRef, studentId));
+    if (!userSnap.exists()) throw new Error("Student not found");
+
+    const userData = userSnap.data();
+    const enrolledCourseIds = userData.enrolledCourseIds || [];
+
+    if (enrolledCourseIds.length === 0) return [];
+
+    const q = query(
+      schedulesRef,
+      where("dayOfWeek", "==", today),
+      where("courseId", "in", enrolledCourseIds)
+    );
+
+    const snap = await getDocs(q);
+
+    const schedules = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Schedule[];
+
+    const detailed = await Promise.all(
+      schedules.map(async (sched) => {
+        const [courseSnap, venueSnap, lecturerSnap] = await Promise.all([
+          getDoc(doc(coursesRef, sched.courseId)),
+          getDoc(doc(venuesRef, sched.venueId)),
+          getDoc(doc(usersRef, sched.lecturerId)),
+        ]);
+
+        return {
+          ...sched,
+          course: courseSnap.exists()
+            ? { id: courseSnap.id, ...courseSnap.data() }
+            : null,
+          venue: venueSnap.exists()
+            ? { id: venueSnap.id, ...venueSnap.data() }
+            : null,
+          lecturer: lecturerSnap.exists()
+            ? { id: lecturerSnap.id, ...lecturerSnap.data() }
+            : null,
+        };
+      })
+    );
+
+    return detailed as ScheduleFullDetails[];
+  }
+
+  static async getTotalStudentsForLecturer(lecturerId: string) {
+    // 1. Get all courses for this lecturer
+    const coursesQ = query(coursesRef, where("lecturerId", "==", lecturerId));
+    const courseSnap = await getDocs(coursesQ);
+    const courseIds = courseSnap.docs.map((doc) => doc.id);
+
+    if (courseIds.length === 0) return 0;
+
+    // 2. Get all students enrolled in any of these courses
+    const studentsQ = query(usersRef, where("role", "==", "student"));
+    const studentsSnap = await getDocs(studentsQ);
+
+    // 3. Filter students who have any of the courseIds in enrolledCourseIds
+    const enrolledStudents = studentsSnap.docs.filter((snap) => {
+      const data = snap.data();
+      const enrolled = data.enrolledCourseIds || [];
+      return enrolled.some((courseId: string) => courseIds.includes(courseId));
+    });
+
+    return enrolledStudents.length;
+  }
+  static async rescheduleClass(
+    scheduleId: string,
+    updates: {
+      dayOfWeek: string;
+      startTime: string;
+      endTime: string;
+      venueId?: string; // Optional: can allow moving venue too
+    }
+  ) {
+    const scheduleDoc = doc(schedulesRef, scheduleId);
+    const schedSnap = await getDoc(scheduleDoc);
+
+    if (!schedSnap.exists()) throw new Error("Schedule not found");
+
+    const sched = schedSnap.data();
+    const lecturerId = sched.lecturerId;
+    const venueId = updates.venueId || sched.venueId;
+
+    // Check venue conflicts
+    const venueQ = query(
+      schedulesRef,
+      where("dayOfWeek", "==", updates.dayOfWeek),
+      where("venueId", "==", venueId)
+    );
+    const venueConflicts = await getDocs(venueQ);
+    venueConflicts.forEach((snap) => {
+      if (snap.id === scheduleId) return; // skip same schedule
+      const s = snap.data();
+      if (updates.startTime < s.endTime && updates.endTime > s.startTime) {
+        throw new Error("Venue conflict at that time.");
+      }
+    });
+
+    // Check lecturer conflicts
+    const lecturerQ = query(
+      schedulesRef,
+      where("dayOfWeek", "==", updates.dayOfWeek),
+      where("lecturerId", "==", lecturerId)
+    );
+    const lecturerConflicts = await getDocs(lecturerQ);
+    lecturerConflicts.forEach((snap) => {
+      if (snap.id === scheduleId) return;
+      const s = snap.data();
+      if (updates.startTime < s.endTime && updates.endTime > s.startTime) {
+        throw new Error("Lecturer conflict at that time.");
+      }
+    });
+
+    // If passed checks, update
+    await updateDoc(scheduleDoc, {
+      dayOfWeek: updates.dayOfWeek,
+      startTime: updates.startTime,
+      endTime: updates.endTime,
+      venueId: venueId,
+    });
   }
 }

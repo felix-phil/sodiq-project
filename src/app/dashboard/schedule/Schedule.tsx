@@ -9,6 +9,8 @@ import { AppUser, Course, ScheduleFullDetails, Venue } from "@/types";
 import useAuth from "@/hooks/use-auth";
 import { ScheduleModel } from "@/models/Schedule";
 import { transformSchedulesToEvents } from "@/helpers";
+import ManageStudentEnrollmentsModal from "./EnrollCourseModal";
+import { CourseModel } from "@/models/Courses";
 
 const localizer = momentLocalizer(moment);
 const SchedulePageConponent: FC<{
@@ -18,6 +20,10 @@ const SchedulePageConponent: FC<{
   refresh?: () => void;
 }> = ({ lecturers = [], courses = [], venues = [] }) => {
   const [openForm, setOpenForm] = useState(false);
+  const [openEnrollForm, setOpenEnrollForm] = useState(false);
+  const [studentEnrolledCourses, setStudentEnrolledCourses] = useState<
+    string[]
+  >([]);
   const auth = useAuth();
   const [schedules, setSchedules] = useState<ScheduleFullDetails[]>([]);
 
@@ -39,20 +45,44 @@ const SchedulePageConponent: FC<{
       console.log(error);
     }
   }, [auth.user?.id, auth.user?.role]);
+  const fetchEnrolledCourses = useCallback(async () => {
+    try {
+      const enrolledCourses = await CourseModel.getEnrolledCourses(
+        auth.user?.id ?? ""
+      );
+      setStudentEnrolledCourses(enrolledCourses.map((course) => course.id));
+    } catch (error) {
+      console.log(error);
+    }
+  }, [auth.user?.id]);
   useEffect(() => {
     fetchSchedules();
   }, [fetchSchedules]);
-  const events =  transformSchedulesToEvents(schedules);
+  useEffect(() => {
+    fetchEnrolledCourses();
+  }, [fetchEnrolledCourses]);
+
+  const events = transformSchedulesToEvents(schedules);
   // console.log("Schedules:", schedules);
   return (
     <div className="flex flex-col h-[90%] w-full font-ins-sans gap-y-5">
       <div className="flex flex-row">
-        <button
-          onClick={() => setOpenForm(true)}
-          className="bg-primary ml-auto text-white px-4 py-1 cursor-pointer rounded-md flex flex-row items-center gap-2"
-        >
-          <BiPlus /> Create Schedule
-        </button>
+        {auth.user?.role !== "student" && (
+          <button
+            onClick={() => setOpenForm(true)}
+            className="bg-primary ml-auto text-white px-4 py-1 cursor-pointer rounded-md flex flex-row items-center gap-2"
+          >
+            <BiPlus /> Create Schedule
+          </button>
+        )}
+        {auth.user?.role === "student" && (
+          <button
+            onClick={() => setOpenEnrollForm(true)}
+            className="bg-primary ml-auto text-white px-4 py-1 cursor-pointer rounded-md flex flex-row items-center gap-2"
+          >
+            Enroll in a course
+          </button>
+        )}
       </div>
       <div className="w-full flex-1 overflow-auto">
         <Calendar
@@ -71,6 +101,13 @@ const SchedulePageConponent: FC<{
         courses={courses}
         venues={venues}
         refresh={fetchSchedules}
+      />
+      <ManageStudentEnrollmentsModal
+        open={openEnrollForm}
+        courses={courses}
+        onDismiss={() => setOpenEnrollForm(false)}
+        refresh={fetchSchedules}
+        enrolledCourseIds={studentEnrolledCourses}
       />
     </div>
   );

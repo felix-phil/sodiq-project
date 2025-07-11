@@ -75,6 +75,13 @@ export class CourseModel {
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
+  //  Get courses enrolled to a lecturer
+  static async getCoursesByLecturer(lecturerId: string) {
+    const q = query(coursesRef, where("lecturerId", "==", lecturerId));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
   // ✅ Optional: Get all courses for a level
   static async getCoursesByLevel(level: number) {
     const q = query(coursesRef, where("level", "==", level));
@@ -84,4 +91,16 @@ export class CourseModel {
   static async deleteCourse(courseId: string) {
     await deleteDoc(doc(db, "courses", courseId));
   }
+  static async updateStudentEnrollments(studentId: string, courseIds: string[]) {
+  const userRef = doc(usersRef, studentId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) throw new Error("Student not found");
+  const user = userSnap.data();
+  if (user.role !== "student") throw new Error("User is not a student");
+
+  await updateDoc(userRef, {
+    enrolledCourseIds: courseIds,
+  });
+}
 }

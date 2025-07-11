@@ -60,4 +60,5 @@ export class UserModel {
       enrolledCourseIds: arrayUnion(courseId),
     });
   }
+  
 }

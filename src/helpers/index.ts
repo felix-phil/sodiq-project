@@ -27,10 +27,14 @@ export const  transformSchedulesToEvents = (schedules: ScheduleFullDetails[])  =
 
     return {
       id: sched.id,
-      title: `${sched.course.code} - ${sched.course.title}\n${sched.venue.name} - ${sched.lecturer.fullName}`,
+      title: `${sched.course.code ?? "No code"} - ${sched.course.title ?? "No title"}\n${sched.venue.name ?? "No venue"} - ${sched.lecturer.fullName ?? "No lecturer"}`,
       start,
       end,
       resource: sched, // keep full object in case you need more
     };
   });
+}
+
+export const uniqueStringArray = (arr: string[]) => {
+  return Array.from(new Set(arr));
 }
