@@ -27,7 +27,7 @@ export const  transformSchedulesToEvents = (schedules: ScheduleFullDetails[])  =
 
     return {
       id: sched.id,
-      title: `${sched.course.code ?? "No code"} - ${sched.course.title ?? "No title"}\n${sched.venue.name ?? "No venue"} - ${sched.lecturer.fullName ?? "No lecturer"}`,
+      title: `${sched.course?.code ?? "No code"} - ${sched.course?.title ?? "No title"}\n${sched.venue?.name ?? "No venue"} - ${sched.lecturer?.fullName ?? "No lecturer"}`,
       start,
       end,
       resource: sched, // keep full object in case you need more

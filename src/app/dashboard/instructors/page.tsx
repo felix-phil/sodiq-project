@@ -42,14 +42,14 @@ const Instructors = () => {
           </thead>
           <tbody>
             {allInstructors.map((instructor) => (
-              <tr key={instructor.id} className="bg-white">
-                <td className="p-2 py-3 text-left">{instructor.email}</td>
-                <td className="p-2 py-3 text-left">{instructor.fullName}</td>
+              <tr key={instructor?.id} className="bg-white">
+                <td className="p-2 py-3 text-left">{instructor?.email}</td>
+                <td className="p-2 py-3 text-left">{instructor?.fullName}</td>
                 <td className="p-2 py-3 text-left">
                   {instructor.teachingCourseIds?.length ?? 0}
                 </td>
                 <td className="p-2 py-3 text-left">
-                  {moment(instructor.createdAt).format("DD/MM/YYYY")}
+                  {moment(instructor?.createdAt).format("DD/MM/YYYY")}
                 </td>
               </tr>
             ))}

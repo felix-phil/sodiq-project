@@ -111,7 +111,7 @@ const CreateScheduleModal: FC<IProps> = ({
                 name="courseId"
                 label="Course"
                 options={courses.map((c) => ({
-                  label: `${c.title} (${c.code})`,
+                  label: `${c.title} (${c?.code})`,
                   value: c.id,
                 }))}
                 onChange={(value) => formik.setFieldValue("courseId", value)}
